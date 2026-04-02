@@ -40,29 +40,25 @@ jobs:
           ssh "${SSH_USER}@${SSH_HOST}" "APP_PATH='${APP_PATH}' bash -s" <<'EOF'
             set -euo pipefail
 
-            sudo -u www-data env APP_PATH="$APP_PATH" bash -c '
-              set -euo pipefail
-              cd "$APP_PATH"
-              app_is_down=0
+            cd "$APP_PATH"
+            app_is_down=0
 
-              cleanup() {
-                if [ "$app_is_down" -eq 1 ]; then
-                  php artisan up || true
-                fi
-              }
+            cleanup() {
+              if [ "$app_is_down" -eq 1 ]; then
+                php artisan up || true
+              fi
+            }
 
-              trap cleanup EXIT
+            trap cleanup EXIT
 
-              git -c safe.directory="$APP_PATH" pull origin main
+            git pull origin main
+            composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 
-              composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
-
-              php artisan down || true
-              app_is_down=1
-              php artisan optimize:clear
-              php artisan migrate --force
-              php artisan config:cache
-              php artisan route:cache
-              php artisan view:cache
-            '
+            php artisan down || true
+            app_is_down=1
+            php artisan optimize:clear
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
           EOF
