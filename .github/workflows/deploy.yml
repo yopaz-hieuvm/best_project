@@ -19,23 +19,30 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy to VPS
+      - name: Deploy
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-            cd /var/www/best_project
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
+            cd /var/www/best_project &&
 
-            git pull origin main
+            git pull origin main &&
 
-            composer install --no-dev --optimize-autoloader
+            composer install --no-dev --optimize-autoloader &&
 
-            php artisan migrate --force
+            php artisan down || true &&
 
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan route:clear
-            php artisan view:clear
+            php artisan config:clear &&
+            php artisan route:clear &&
+            php artisan view:clear &&
+            php artisan cache:clear &&
 
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-          EOF
+            php artisan migrate --force &&
+
+            php artisan config:cache &&
+            php artisan route:cache &&
+            php artisan view:cache &&
+
+            sudo chown -R www-data:www-data /var/www/best_project &&
+            sudo chmod -R 775 storage bootstrap/cache &&
+
+            php artisan up
+          "
