@@ -43,19 +43,22 @@ jobs:
             sudo -u www-data env APP_PATH="$APP_PATH" bash -c '
               set -euo pipefail
               cd "$APP_PATH"
+              app_is_down=0
 
               cleanup() {
-                php artisan up || true
+                if [ "$app_is_down" -eq 1 ]; then
+                  php artisan up || true
+                fi
               }
 
               trap cleanup EXIT
 
-              git config --global --add safe.directory "$APP_PATH" || true
-              git pull origin main
+              git -c safe.directory="$APP_PATH" pull origin main
 
               composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 
               php artisan down || true
+              app_is_down=1
               php artisan optimize:clear
               php artisan migrate --force
               php artisan config:cache
