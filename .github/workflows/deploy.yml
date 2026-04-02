@@ -2,38 +2,63 @@ name: Deploy Laravel
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  APP_PATH: /var/www/best_project
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup SSH
         run: |
+          set -eu
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy
+      - name: Deploy application
+        env:
+          SSH_HOST: ${{ secrets.SERVER_IP }}
+          SSH_USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-            sudo -u www-data bash -c '
-              cd /var/www/best_project &&
-              git pull origin main &&
-              php artisan down || true &&
-              php artisan config:clear &&
-              php artisan route:clear &&
-              php artisan view:clear &&
-              php artisan cache:clear &&
-              php artisan migrate --force &&
-              php artisan config:cache &&
-              php artisan route:cache &&
-              php artisan view:cache &&
-              php artisan up
-            '
-          "
+          ssh "${SSH_USER}@${SSH_HOST}" "APP_PATH='${APP_PATH}' bash -s" <<'EOF'
+            set -euo pipefail
+
+            cd "$APP_PATH"
+            sudo -u www-data env APP_PATH="$APP_PATH" bash <<'REMOTE'
+              set -euo pipefail
+              cd "$APP_PATH"
+
+              cleanup() {
+                php artisan up || true
+              }
+
+              trap cleanup EXIT
+
+              git pull origin main
+
+              php artisan down || true
+
+              php artisan optimize:clear
+              php artisan migrate --force
+              php artisan config:cache
+              php artisan route:cache
+              php artisan view:cache
+            REMOTE
+          EOF
