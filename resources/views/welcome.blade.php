@@ -49,7 +49,7 @@
             <div class="mt-6 lg:mt-0 lg:pr-16">
                 <h1 class="text-4xl font-bold mb-6">Welcome to Laravel</h1>
                 <p class="text-lg leading-relaxed text-[#191400] dark:text-[#EDEDEC]">
-                    Tesst deploy
+                    Tesst deploy 12312312312312312
                 </p>
             </div>
         </main>
