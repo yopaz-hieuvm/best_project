@@ -25,7 +25,6 @@ jobs:
             sudo -u www-data bash -c '
               cd /var/www/best_project &&
               git pull origin main &&
-              composer install --no-dev --optimize-autoloader &&
               php artisan down || true &&
               php artisan config:clear &&
               php artisan route:clear &&
