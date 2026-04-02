@@ -50,7 +50,7 @@
                 <h1 class="text-4xl font-bold mb-6">Welcome to Laravel</h1>
                 <p class="text-lg leading-relaxed text-[#191400] dark:text-[#EDEDEC]">
                     Laravel is a web application framework with expressive, elegant syntax. We’ve already laid the
-                    foundation — freeing you to create without sweating the small things. 12312312312
+                    foundation — freeing you to create without sweating the small things. 123123123121123123
                 </p>
             </div>
         </main>
